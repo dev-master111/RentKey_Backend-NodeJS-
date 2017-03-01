@@ -36,6 +36,12 @@ module.exports = function (app, passport) {
     router.get('/properties', propertyCtrl.index);
     router.post('/propertyphotos', propertyphotoCtrl.addPropertyPhoto);
 
+	router.get('/neighborhoods/:id/properties', neighborhoodCtrl.propertiesForNeighborhood);
+    router.post('/neighborhoods/:id/properties', neighborhoodCtrl.propertiesForNeighborhoodFilter);
+    router.get('/properties/:id', propertyCtrl.show);
+    router.get('/properties/:id/photos', propertyphotoCtrl.index);
+    router.get('/copyPossible', propertyCtrl.copyPossible);
+
     router.all('/users/:id*', modelMagic('User'));
     router.all('/amenities/:id*', modelMagic('Amenity'));
     router.all('/neighborhoods/:id*', modelMagic('Neighborhood'));

@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "$NODE_ENV" = production ]; then
+  forever start dist/server.js
+else
+  nodemon --exec ./node_modules/.bin/babel-node server.js
+fi

@@ -104,6 +104,71 @@ async function filterNeighborhood(req, res, next) {
     res.success({data: aryNeighborhoods});
 }
 
+async function filterNeighborhood(req, res, next) {
+
+    const { startPrice, endPrice, bed_num, extra_room, bathroom_num, moving_date, pets, amenities, walk_up, display, no_filter } = req.body;
+
+    const aryBedNum = Array.from(bed_num);
+    const aryWalkUp = Array.from(walk_up);
+    const aryAmenities = Array.from(amenities);
+    const aryDisplay = Array.from(display);
+
+    let query = { rent_fee: { $gt: startPrice, $lt: endPrice } };
+    if (!no_filter) {
+        if (aryBedNum.length > 0) {
+            query['bed_num'] = { $in: aryBedNum };
+        }
+        query['bathroom_num'] = { $gte: bathroom_num };
+        query['moving_date'] = { $lte: moving_date };
+        query['pets'] = { $gte: pets };
+        query['walk_up'] = { $in: aryWalkUp };
+        if (extra_room < 2) {
+            query['extra_room'] = { $ne: extra_room };
+        }
+        if (_.include(aryDisplay, "broker fee apts") && _.include(aryDisplay, "no fee")) {
+
+        } else if (_.include(aryDisplay, "broker fee apts")) {
+            query['broker_fee'] = {$gt: 0};
+        } else if (_.include(aryDisplay, "no fee")) {
+            query['broker_fee'] = 0;
+        }
+        if (aryAmenities.length > 0) {
+            query['_amenities'] = { $all: aryAmenities };
+        }
+    }
+
+    let aryTempNeighborhoods = await Neighborhood.find({});
+    let aryNeighborhoods = [];
+
+    for (let i = 0; i < aryTempNeighborhoods.length; i ++) {
+        var neighborhood = aryTempNeighborhoods[i];
+        query['_neighborhood'] = neighborhood.id;
+        // Get Number of Properties in the neighborhood and add that as a property of neighborhood
+        const aryPropertiesInNeighborhood = await Property.find(query);
+
+        let propertyCount = 0;
+        if (no_filter) {
+            propertyCount = aryPropertiesInNeighborhood.length;
+        } else if (_.include(aryDisplay, "by owner")) {
+            for (let j = 0; j < aryPropertiesInNeighborhood.length; j++) {
+                var property = aryPropertiesInNeighborhood[j];
+                const creator = await User.findOne({_id: property._user});
+                if (creator.role == 'owner') {
+                    propertyCount++;
+                }
+            }
+        } else {
+            propertyCount = aryPropertiesInNeighborhood.length;
+        }
+        var neighborhoodObj = neighborhood.toObject();
+        neighborhoodObj.property_count = propertyCount;
+
+        aryNeighborhoods.push(neighborhoodObj);
+    }
+
+    res.success({data: aryNeighborhoods});
+}
+
 async function show(req, res) {
     res.success({ data: req.Neighborhood})
 }

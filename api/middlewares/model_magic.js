@@ -19,6 +19,23 @@ export default function (model, param = 'id') {
             req[model] = found;
         }
         next();
+
+        if (!mongoose.Types.ObjectId.isValid(req.params[param])) {
+            return next();
+        }
+        let found;
+        try {
+            found = await m.findById(req.params[param]);
+        } catch (e) {
+            return res.error('Could not query model');
+        }
+        if (!found) {
+            return res.error(`${capitalize(model)} not found.`, 404);
+        }
+        if (!req[model]) {
+            req[model] = found;
+        }
+        next();
     };
 }
 
